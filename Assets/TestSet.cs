@@ -12,7 +12,7 @@ public class TestSet : MonoBehaviour {
     private float onTimeLeft;
     private bool nextTestStateActive;
 
-    private enum TestState { BASELINE, SATURATED, NEXT };
+    private enum TestState { READY, BASELINE, SATURATED };
     private enum ActuatorId { VIBRATION, TEMPERATURE, EMS };
 
     Communication communication;
@@ -20,7 +20,7 @@ public class TestSet : MonoBehaviour {
         communication = FindObjectOfType(typeof(Communication)) as Communication;
 
         testIndex = 0;
-        testState = TestState.BASELINE;
+        testState = TestState.READY;
         nextTestStateActive = true;
         onTimeLeft = 0;
 
@@ -41,9 +41,19 @@ public class TestSet : MonoBehaviour {
     }
 
     public void NextTestState() {
-        if (testState == TestState.SATURATED)
+        if (testState == TestState.READY)
         {
             testState = TestState.BASELINE;
+            nextTestStateActive = true;
+        }
+        else if (testState == TestState.BASELINE)
+        {
+            testState = TestState.SATURATED;
+            nextTestStateActive = true;
+        }
+        else if (testState == TestState.SATURATED)
+        {
+            testState = TestState.READY;
 
             if (++testIndex == impactTest.Count)
             {
@@ -63,22 +73,32 @@ public class TestSet : MonoBehaviour {
             }
             */
         }
-        else
-        {
-            testState = TestState.SATURATED;
-            nextTestStateActive = true;
-        }
     }
 
     public void Log(string input) {
+        int valueIndex;
+        if (testState == TestState.BASELINE)
+        {
+            valueIndex = 0;
+        }
+        else if (testState == TestState.SATURATED)
+        {
+            valueIndex = 1;
+        }
+        else
+        {
+            return;
+        }
+
         string logString = "user response: " + input;
 
-        foreach (KeyValuePair<ActuatorId, int[]> entry in impactTest[testIndex][(int)testState])
+        foreach (KeyValuePair<ActuatorId, int[]> entry in impactTest[testIndex][valueIndex])
         {
             logString += " Actuator Type: " + entry.Key.ToString() + " values: [";
-            for (int i = 0; i < entry.Value.Length; i++) {
+            for (int i = 0; i < entry.Value.Length; i++)
+            {
                 logString += entry.Value[i];
-                if (i< entry.Value.Length-1)
+                if (i < entry.Value.Length - 1)
                 {
                     logString += ", ";
                 }
@@ -93,7 +113,16 @@ public class TestSet : MonoBehaviour {
     }
     
     void DoTest() {
-        Dictionary<ActuatorId, int[]> testSet = impactTest[testIndex][(int)testState];
+        Dictionary<ActuatorId, int[]> testSet = null;
+
+        if (testState == TestState.BASELINE)
+        {
+            testSet = impactTest[testIndex][0];
+        }
+        else if (testState == TestState.SATURATED)
+        {
+            testSet = impactTest[testIndex][1];
+        }
 
         if (onTimeLeft > 0)
         {
@@ -114,18 +143,23 @@ public class TestSet : MonoBehaviour {
         {
             nextTestStateActive = false;
 
-            Debug.Log("Test #" + testIndex + " Element " + testState.ToString());
+            if (testState == TestState.BASELINE || testState == TestState.SATURATED)
+            {
+                Debug.Log("Test #" + testIndex + " Element " + testState.ToString());
 
-            foreach (KeyValuePair<ActuatorId, int[]> testElement in testSet) {
-                int actuatorId = (int)testElement.Key;
-                int[] values = testElement.Value;
+                foreach (KeyValuePair<ActuatorId, int[]> testElement in testSet)
+                {
+                    int actuatorId = (int)testElement.Key;
+                    int[] values = testElement.Value;
 
-                communication.QueueValues(actuatorId, values);
+                    communication.QueueValues(actuatorId, values);
+                }
+
+                onTimeLeft = onDuration;
+
+                Debug.Log("Input user response: ");
             }
 
-            onTimeLeft = onDuration;
-            
-            Debug.Log("Input user response: ");
         }
     }
 
