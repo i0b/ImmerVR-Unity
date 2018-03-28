@@ -34,8 +34,8 @@ public class KeyboardControl : MonoBehaviour {
 
         if (Input.GetKeyDown(KeyCode.Return))
         {
-            testSet.contineOk = true;
-            testSet.log(input);
+            testSet.Log(input);
+            testSet.NextTestState();
             input = "";
             //Debug.Log("continuing...");
         }

@@ -1,31 +1,19 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-class AttributeSet {
-    public int Mass;
-    public int ExpectedTemperature;
-    public int ExpectedEMS;
-    public Vector3 Position;
-
-    public AttributeSet(Vector3 position, int mass, int expectedTemperature, int expectedEMS) {
-        Position = position;
-        Mass = mass;
-        ExpectedTemperature = expectedTemperature;
-        ExpectedEMS = expectedEMS;
-    }
-}
-
 public class TestSet : MonoBehaviour {
-    public GameObject projectilePrefab;
+    //public GameObject projectilePrefab;
     public int[] testOrder;
-    public bool contineOk;
-
-    private List<AttributeSet[]> impactTest;
+    public float onDuration;
+    
+    private List<Dictionary<ActuatorId, int[]>[]> impactTest;
     private int testIndex;
     private TestState testState;
-    private AttributeSet currentTestValues;
+    private float onTimeLeft;
+    private bool nextTestStateActive;
 
     private enum TestState { BASELINE, SATURATED, NEXT };
+    private enum ActuatorId { VIBRATION, TEMPERATURE, EMS };
 
     Communication communication;
     void Start() {
@@ -33,88 +21,115 @@ public class TestSet : MonoBehaviour {
 
         testIndex = 0;
         testState = TestState.BASELINE;
-        contineOk = false;
+        nextTestStateActive = true;
+        onTimeLeft = 0;
 
-        impactTest = new List<AttributeSet[]>();
-        // AttributeSet: Position, Mass, Expected Temperatrue, Expected EMS
+        impactTest = new List<Dictionary<ActuatorId, int[]>[]>();
         // Test Case 1
-        impactTest.Add(new AttributeSet[] { new AttributeSet(new Vector3(20, 10, 20), 60, 25, 0),
-                                            new AttributeSet(new Vector3(20, 10, 20), 60, -20, 0) });
+        impactTest.Add(new Dictionary<ActuatorId, int[]>[] {
+        new Dictionary<ActuatorId, int[]> { { ActuatorId.TEMPERATURE, new[] { 0, 0, 0, 20 } } },
+        new Dictionary<ActuatorId, int[]> { { ActuatorId.VIBRATION,   new[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 25, 0 } },
+                                            { ActuatorId.TEMPERATURE, new[] { 0, 0, 0, 20 } } }
+        });
 
         // Test Case 2
-        impactTest.Add(new AttributeSet[] { new AttributeSet(new Vector3(-20, 10, 20), 90, 25, 0),
-                                            new AttributeSet(new Vector3(-20, 10, 20), 90, 80, 0) });
-
-        // Test Case 3
-        impactTest.Add(new AttributeSet[] { new AttributeSet(new Vector3(20, 10, 20), 60, 25, 0),
-                                            new AttributeSet(new Vector3(20, 10, 20), 60, 25, 8) });
-
-
-        // Test Case 4
-        impactTest.Add(new AttributeSet[] { new AttributeSet(new Vector3(-20, 10, 20), 90, 25, 0),
-                                            new AttributeSet(new Vector3(-20, 10, 20), 90, 25, 8) });
-
-
-        //communication.QueueValues(0, new int[]{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-        //communication.QueueValues(1, new int[] { 0, 0, 0, 0 });
-        //communication.QueueValues(2, new int[] { 0, 0 });
-
+        impactTest.Add(new Dictionary<ActuatorId, int[]>[] {
+        new Dictionary<ActuatorId, int[]> { { ActuatorId.TEMPERATURE, new[] { 0, 0, 0, 20 } } },
+        new Dictionary<ActuatorId, int[]> { { ActuatorId.VIBRATION,   new[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50, 50, 0 } },
+                                            { ActuatorId.TEMPERATURE, new[] { 0, 0, 0, 20 } } }
+        });
     }
 
-    public void log(string input) {
-        Debug.Log(input + JsonUtility.ToJson(currentTestValues));
-    }
-    
-    void doTest() {
-        if (testIndex >= impactTest.Count) {
-            return;
-        }
-        AttributeSet[] projectileAttributes = impactTest[testIndex];
-
-        
-        // prepare next test
-        if (testState == TestState.NEXT && contineOk == true)
+    public void NextTestState() {
+        if (testState == TestState.SATURATED)
         {
             testState = TestState.BASELINE;
+
             if (++testIndex == impactTest.Count)
             {
                 Debug.Log("Test has been completed");
+                //nextTestStateActive = false;
+
+
+                Debug.Log("Starting next round");
                 testIndex = 0;
+                nextTestStateActive = true;
+
             }
             /*
             else {
                 Debug.Log("Next dataset: " + testIndex);
+                nextTestStateActive = true;
             }
             */
         }
+        else
+        {
+            testState = TestState.SATURATED;
+            nextTestStateActive = true;
+        }
+    }
 
-        else if (contineOk == true) {
+    public void Log(string input) {
+        string logString = "user response: " + input;
+
+        foreach (KeyValuePair<ActuatorId, int[]> entry in impactTest[testIndex][(int)testState])
+        {
+            logString += " Actuator Type: " + entry.Key.ToString() + " values: [";
+            for (int i = 0; i < entry.Value.Length; i++) {
+                logString += entry.Value[i];
+                if (i< entry.Value.Length-1)
+                {
+                    logString += ", ";
+                }
+                else
+                {
+                    logString += "]";
+                }
+            }
+        }
+
+        Debug.Log(logString);
+    }
+    
+    void DoTest() {
+        Dictionary<ActuatorId, int[]> testSet = impactTest[testIndex][(int)testState];
+
+        if (onTimeLeft > 0)
+        {
+            onTimeLeft -= Time.deltaTime;
+        }
+        else
+        {
+            communication.QueueValues((int)ActuatorId.VIBRATION, new int[]{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+            communication.QueueValues((int)ActuatorId.TEMPERATURE, new int[] { 0, 0, 0, 0 });
+            communication.QueueValues((int)ActuatorId.EMS, new int[] { 0, 0 });
+        }
+
+        if (testIndex >= impactTest.Count)
+        {
+            return;
+        }
+        else if (nextTestStateActive == true)
+        {
+            nextTestStateActive = false;
+
             Debug.Log("Test #" + testIndex + " Element " + testState.ToString());
 
-            currentTestValues = projectileAttributes[(int)testState];
+            foreach (KeyValuePair<ActuatorId, int[]> testElement in testSet) {
+                int actuatorId = (int)testElement.Key;
+                int[] values = testElement.Value;
 
-            createProjectile(currentTestValues);
-            contineOk = false;
-            testState++;
+                communication.QueueValues(actuatorId, values);
+            }
 
-            // wait for result
+            onTimeLeft = onDuration;
+            
             Debug.Log("Input user response: ");
         }
     }
 
-    void createProjectile(AttributeSet projectileAttributes) {
-        GameObject newProjectile = Instantiate(
-                projectilePrefab,
-                projectileAttributes.Position,
-                Quaternion.identity
-            );
-
-        newProjectile.GetComponent<HapticAttributes>().Mass = projectileAttributes.Mass;
-        newProjectile.GetComponent<TemperatureAttributes>().ExpectedTemperature = projectileAttributes.ExpectedTemperature;
-        newProjectile.GetComponent<EMSAttributes>().ExpectedEMS = projectileAttributes.ExpectedEMS;
-    }
-
     void Update () {
-        doTest();
+        DoTest();
     }
 }

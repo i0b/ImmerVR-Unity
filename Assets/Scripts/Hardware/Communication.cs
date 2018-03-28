@@ -314,10 +314,12 @@ public class Communication : MonoBehaviour
                         newValues = MaxStackValues(queuedActuatorValuesById[moduleId]);
                         break;
                     case ActuatorType.Temperature:
-                        newValues = AverageStackValues(queuedActuatorValuesById[moduleId]);
+                        newValues = MaxStackValues(queuedActuatorValuesById[moduleId]);
+                        //newValues = AverageStackValues(queuedActuatorValuesById[moduleId]);
                         break;
                     case ActuatorType.EMS:
-                        newValues = AverageStackValues(queuedActuatorValuesById[moduleId]);
+                        newValues = MaxStackValues(queuedActuatorValuesById[moduleId]);
+                        //newValues = AverageStackValues(queuedActuatorValuesById[moduleId]);
                         break;
                 }
 
