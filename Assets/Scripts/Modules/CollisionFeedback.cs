@@ -63,6 +63,8 @@ public class CollisionFeedback : MonoBehaviour {
 
     private void QueueValues(int id, int[] values)
     {
+
+        Debug.Log("sending new command");
         NormalizeValues(id, values);
         communication.QueueValues(id, values);
     }
@@ -201,6 +203,7 @@ public class CollisionFeedback : MonoBehaviour {
                 distance = distance / DistanceResolution;
             }
 
+            /*
             float deltaTemperature = (expectedTemperature - (float)currentTemperatures[actuator]) / (distance);
             
             if (Math.Abs(deltaTemperature) > MinFeelableTempDif)
@@ -211,6 +214,9 @@ public class CollisionFeedback : MonoBehaviour {
             {
                 newTemeratures[actuator] = 0;
             }
+            */
+            
+             newTemeratures[actuator] = (int)(expectedTemperature / distance);
 
             //Debug.Log("expected: " + collision.collider.GetComponent<TemperatureAttributes>().ExpectedTemperature + " current: " + currentTemperatures[actuator] + " new: " + newTemeratures[actuator] + " distance: "+distance);
         }
@@ -277,17 +283,17 @@ public class CollisionFeedback : MonoBehaviour {
 
                 if (nextTemperatureStep >= temperatureOnTime) {
                     for (int i = 0; i < values.Length; i++) {
-                    /*
-                        if (values[i] == 26 || values[i] == 0) {
-                            values[i] = 0;
-                        }
-                        else if (values[i] > 26) {
-                            values[i] -= decresePerUpdate;
-                        }
-                        else if (values[i] < 26) {
-                            values[i] += decresePerUpdate;
-                        }
-                    */
+                        /*
+                            if (values[i] == 26 || values[i] == 0) {
+                                values[i] = 0;
+                            }
+                            else if (values[i] > 26) {
+                                values[i] -= decresePerUpdate;
+                            }
+                            else if (values[i] < 26) {
+                                values[i] += decresePerUpdate;
+                            }
+                        */
                         values[i] = 0;
                     }
 

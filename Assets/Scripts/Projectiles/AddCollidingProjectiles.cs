@@ -8,12 +8,17 @@ public class AddCollidingProjectiles : MonoBehaviour
     public int Mass;
     public int TemperatureOnImpactPosition;
     public int EMSOnImpactPosition;
+    public Color ProjectileColor;
 
     public float spawnInterval;
     public float distance;
     public float offset;
-    private float nextSpawnTime = 0f;
+    private float nextSpawnTime;
 
+    private void Start()
+    {
+        nextSpawnTime = Time.time;
+    }
 
     void CreateProjectile()
     {
@@ -34,9 +39,36 @@ public class AddCollidingProjectiles : MonoBehaviour
             );
 
             //newProjectile.GetComponent<Rigidbody>().mass = keyboardControl.mass;
-            newProjectile.GetComponent<HapticAttributes>().Mass = Mass;
-            newProjectile.GetComponent<TemperatureAttributes>().ExpectedTemperature = TemperatureOnImpactPosition;
-            newProjectile.GetComponent<EMSAttributes>().ExpectedEMS = EMSOnImpactPosition;
+            if (Mass == 0)
+            {
+                Destroy(newProjectile.GetComponent<HapticAttributes>());
+            }
+            else
+            {
+                newProjectile.GetComponent<HapticAttributes>().Mass = Mass;
+            }
+
+            if (TemperatureOnImpactPosition == 0)
+            {
+                Destroy(newProjectile.GetComponent<TemperatureAttributes>());
+            }
+            else
+            {
+                newProjectile.GetComponent<TemperatureAttributes>().ExpectedTemperature = TemperatureOnImpactPosition;
+            }
+
+            if (EMSOnImpactPosition == 0)
+            {
+                Destroy(newProjectile.GetComponent<EMSAttributes>());
+            }
+            else
+            {
+                newProjectile.GetComponent<EMSAttributes>().ExpectedEMS = EMSOnImpactPosition;
+            }
+            
+            //newProjectile.GetComponent<Material>().color = ProjectileColor;
+            Renderer renderer = newProjectile.GetComponent<Renderer>();
+            renderer.material.color = ProjectileColor;
 
             //newProjectile.GetComponent<TemperatureAttributes>().ExpectedTemperature = ExpTemperatureBaseline+Random.Range(-ExpTemperatureVariance, ExpTemperatureVariance);
 

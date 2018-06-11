@@ -53,9 +53,11 @@ public class Communication : MonoBehaviour
     private Dictionary<int, Module> modulesById;
     private Dictionary<int, Command> commandsById;
     private Dictionary<int, Stack<int[]>> queuedActuatorValuesById;
+    private String lastCommand;
 
     void Start()
     {
+        lastCommand = "";
         commandsToSendNext = new Stack<Command>();
         modulesById = new Dictionary<int, Module>();
         commandsById = new Dictionary<int, Command>();
@@ -77,6 +79,7 @@ public class Communication : MonoBehaviour
 
     public void QueueValues(int moduleId, int[] values)
     {
+        Debug.Log("New Command");
         queuedActuatorValuesById[moduleId].Push((int[])values.Clone());
     }
 
@@ -106,8 +109,10 @@ public class Communication : MonoBehaviour
             commandsToSendNext.Clear();
         }
 
-        if (output != null)
+        if (output != null && !output.Equals(lastCommand))
         {
+            lastCommand = output;
+
             if (serialController.enabled == true)
             {
                 serialController.SendSerialMessage(output);
@@ -370,7 +375,7 @@ public class Communication : MonoBehaviour
             }
             catch (ArgumentException e)
             {
-                Debug.Log("Not valid JSON");
+                Debug.Log("Not valid JSON: " + message);
             }
         }
     }
