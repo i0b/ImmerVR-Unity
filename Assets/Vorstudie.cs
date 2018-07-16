@@ -1,11 +1,12 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class Vorstudie : MonoBehaviour
 {
     public Text infoText;
-
     public Logger log;
+    public SteamVR_TrackedController trackedController;
 
     private int currentValue;
     private long minValue;
@@ -18,7 +19,6 @@ public class Vorstudie : MonoBehaviour
     private enum TestState { EMS1_LEFT, EMS1_RIGHT, COLD_UP_LEFT, COLD_DOWN_RIGHT, VIBRATION, HOT_UP_LEFT, HOT_DOWN_RIGHT, EMS2_LEFT, EMS2_RIGHT, FINISHED };
     private TestState state;
     private bool tempertureActuating;
-    private SteamVR_TrackedController trackedController;
 
     void Start () {
         currentValue = 0;
@@ -31,20 +31,21 @@ public class Vorstudie : MonoBehaviour
         log.Initialize("Vorstudie");
         log.writeHeader("Timestamp;UserID;ActuatorType;MinValue;MaxValue;");
 
-        trackedController = GetComponent<SteamVR_TrackedController>();
-        if (trackedController == null)
-        {
-            trackedController = GetComponentInParent<SteamVR_TrackedController>();
-        }
-
         trackedController.TriggerClicked += HandleTriggerClicked;
+
+        StartCoroutine(initialForceFeedback());
+    }
+
+    IEnumerator initialForceFeedback() {
+        SendCommand(0, ElementPosition.ALL, 100);
+        yield return new WaitForSeconds(2.0f);
+        AllOff();
     }
 
     private void AllOff() {
-        SendCommand(ActuatorType.COLD, ElementPosition.ALL, 0);
-        //SendCommand(ActuatorType.HOT, ElementPosition.ALL, 0);
         SendCommand(ActuatorType.VIBRATION, ElementPosition.ALL, 0);
         SendCommand(ActuatorType.EMS, ElementPosition.ALL, 0);
+        communication.QueueValues(1, new int[] { 0, 0, 0, 0 });
     }
 
     private void Log() {
@@ -94,16 +95,20 @@ public class Vorstudie : MonoBehaviour
                 }
                 break;
             case ActuatorType.HOT:
-                if (intensity != 1) {
+                if (intensity != 1)
+                {
                     communication.QueueValues(1, new int[] { 0, 0, 0, 0 });
                 }
-                else if (element == ElementPosition.LEFT_OR_UP) {
+                else if (element == ElementPosition.LEFT_OR_UP)
+                {
                     communication.QueueValues(1, new int[] { 0, 30, 0, 0 });
                 }
-                else if (element == ElementPosition.RIGHT_OR_DOWN) {
+                else if (element == ElementPosition.RIGHT_OR_DOWN)
+                {
                     communication.QueueValues(1, new int[] { 0, 0, 0, 30 });
                 }
-                else if (element == ElementPosition.ALL) {
+                else if (element == ElementPosition.ALL)
+                {
                     communication.QueueValues(1, new int[] { 30, 30, 30, 30 });
                 }
                 break;
@@ -132,6 +137,7 @@ public class Vorstudie : MonoBehaviour
 
     private void HandleTriggerClicked(object sender, ClickedEventArgs e)
     {
+        Debug.Log("Controller Trigger Clicked");
         if (tempertureActuating == true)
         {
             SendCommand(ActuatorType.COLD, ElementPosition.ALL, 0);
