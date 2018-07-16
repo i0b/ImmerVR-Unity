@@ -9,17 +9,17 @@ using System;
 #endif
 
 public class Logger : MonoBehaviour {
-	public string filename, filepath;
+	public string filepath;
 	private string fullpath;
 
 	public int UserID = 0;
 
 	private FileStream fileStream;
 	private StreamWriter streamWriter;
-
+    private string filename;
 	public void Initialize(string logname) {
-		filename = UserID + "_" + logname + System.DateTime.Now.ToString("_yyMMdd_hhmmss") + ".csv";
-		filepath = Application.persistentDataPath;
+		filename = UserID + "_" + logname + "_" + System.DateTime.Now.ToString("_yyMMdd_hhmmss") + ".csv";
+		//filepath = Application.dataPath;
 		fullpath = filepath + "/" + filename;
 
 		fileStream = new FileStream(fullpath, FileMode.Append);

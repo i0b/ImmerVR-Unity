@@ -67,10 +67,9 @@ public class Communication : MonoBehaviour
     private StreamWriter streamWriter;
 
     public void InitializeLogFile() {
-        filename = UserID + "_input_messages_" + System.DateTime.Now.ToString("_yyMMdd_hhmmss") + ".csv";
-        filepath = Application.persistentDataPath;
-        fullpath = filepath + "/" + filename;
-
+        //filepath = Application.persistentDataPath;
+        fullpath = filepath + "/" + filename + "_" + UserID + "_input_messages_" + System.DateTime.Now.ToString("_yyMMdd_hhmmss") + ".csv";
+        
         fileStream = new FileStream(fullpath, FileMode.Append);
         streamWriter = new StreamWriter(fileStream);
 
@@ -116,6 +115,7 @@ void Start()
         sendNextUpdates = 0.0f;
 
         serialController = GameObject.Find("HardwareController").GetComponent<SerialController>();
+        InitializeLogFile();
     }
 
     public void QueueValues(int moduleId, int[] values)
