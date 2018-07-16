@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.IO;
 
 [System.Serializable]
 class CommandList
@@ -46,6 +47,7 @@ public class Communication : MonoBehaviour
     public SerialController serialController;
     public bool ShowInMessages = true;
     public bool ShowOutMessages = true;
+    public bool WriteInToFile = false;
     public int[] MessageFilterById;
 
     private Stack<Command> commandsToSendNext;
@@ -54,7 +56,48 @@ public class Communication : MonoBehaviour
     private Dictionary<int, Command> commandsById;
     private Dictionary<int, Stack<int[]>> queuedActuatorValuesById;
 
-    void Start()
+
+
+    public string filename, filepath;
+    private string fullpath;
+
+    public int UserID = 0;
+
+    private FileStream fileStream;
+    private StreamWriter streamWriter;
+
+    public void InitializeLogFile() {
+        filename = UserID + "_input_messages_" + System.DateTime.Now.ToString("_yyMMdd_hhmmss") + ".csv";
+        filepath = Application.persistentDataPath;
+        fullpath = filepath + "/" + filename;
+
+        fileStream = new FileStream(fullpath, FileMode.Append);
+        streamWriter = new StreamWriter(fileStream);
+
+        if (streamWriter == null)
+        {
+            return;
+        }
+
+        streamWriter.WriteLine("Timestamp;UserID;HardwareValues;");
+        streamWriter.Flush();
+    }
+
+    public void WriteToLogFile(string exportString)
+    {
+        if (streamWriter == null)
+        {
+            return;
+        }
+
+        long currentTimestamp = System.DateTime.Now.Ticks / System.TimeSpan.TicksPerMillisecond;
+
+        streamWriter.WriteLine(currentTimestamp + ";" + UserID + ";" + exportString);
+        streamWriter.Flush();
+    }
+
+
+void Start()
     {
         commandsToSendNext = new Stack<Command>();
         modulesById = new Dictionary<int, Module>();
@@ -353,6 +396,11 @@ public class Communication : MonoBehaviour
             if (ShowInMessages == true)
             {
                 Debug.Log("Received message: " + message);
+            }
+
+            if (WriteInToFile == true)
+            {
+                WriteToLogFile(message);
             }
 
             // parse json

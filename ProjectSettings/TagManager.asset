@@ -4,15 +4,13 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - haptic-impact
   - haptic-ambient
   - vr-goggles
   - head
-  - haptic-actuator
   - module
-  - temperature-actuator
-  - ems-actuator
   - Actuator
+  - test-yes-sphere
+  - test-no-sphere
   layers:
   - Default
   - TransparentFX
