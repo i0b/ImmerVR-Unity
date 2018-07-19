@@ -95,8 +95,7 @@ public class Communication : MonoBehaviour
         streamWriter.Flush();
     }
 
-
-void Start()
+    private void Awake()
     {
         commandsToSendNext = new Stack<Command>();
         modulesById = new Dictionary<int, Module>();
@@ -111,7 +110,9 @@ void Start()
             commandsById.Add(module.ID, new Command { id = module.ID });
             queuedActuatorValuesById.Add(module.ID, new Stack<int[]>());
         }
-
+    }
+    void Start()
+    {
         sendNextUpdates = 0.0f;
 
         serialController = GameObject.Find("HardwareController").GetComponent<SerialController>();
