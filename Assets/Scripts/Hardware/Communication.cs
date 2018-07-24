@@ -409,17 +409,24 @@ public class Communication : MonoBehaviour
             {
                 Summary summary = Summary.CreateFromJSON(message);
 
-                foreach (ModuleInformation item in summary.modules)
+                if (summary == null)
                 {
-                    modulesById[item.id].setReadValues(item.values.ToArray());
-
-                    modulesById[item.id].setMeasuredValues(item.measurements.ToArray());
+                    Debug.Log("WARNING: message parsing not successful");
                 }
 
+                else
+                {
+                    foreach (ModuleInformation item in summary.modules)
+                    {
+                        modulesById[item.id].setReadValues(item.values.ToArray());
+
+                        modulesById[item.id].setMeasuredValues(item.measurements.ToArray());
+                    }
+                }
             }
             catch (ArgumentException e)
             {
-                Debug.Log("Not valid JSON");
+                Debug.Log("WARNING: Not valid JSON");
             }
         }
     }

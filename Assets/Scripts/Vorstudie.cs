@@ -14,11 +14,11 @@ public class Vorstudie : MonoBehaviour
     public AudioSource clickAudio;
     public int MaxValueEMS = 10;
 
-    public string filename, filepath;
+    public Communication communication;
+
+    public string Filename;
+
     private string fullpath;
-
-    public int UserID = 0;
-
     private FileStream fileStream;
     private StreamWriter streamWriter;
 
@@ -30,7 +30,7 @@ public class Vorstudie : MonoBehaviour
     private float temperature = 0;
 
     private enum ActuatorType { EMS, TEMPERATURE, VIBRATION };
-    private Communication communication;
+    //private Communication communication;
     
     private enum TestState { EMS1_LEFT, EMS1_RIGHT, COLD_UP_RIGHT, COLD_DOWN_RIGHT, VIBRATION, HOT_UP_RIGHT, HOT_DOWN_RIGHT, EMS2_LEFT, EMS2_RIGHT, FINISHED };
     private Dictionary<TestState, ActuatorType> stateToActuatorMap;
@@ -43,7 +43,7 @@ public class Vorstudie : MonoBehaviour
         currentValue = 0;
         runningState = RunningState.READY;
         
-        communication = FindObjectOfType(typeof(Communication)) as Communication;
+        //communication = FindObjectOfType(typeof(Communication)) as Communication;
         //AllOff();
         state = TestState.EMS1_LEFT;
         infoText.text = state.ToString()+" ready";
@@ -194,7 +194,7 @@ public class Vorstudie : MonoBehaviour
     public void InitializeLogFile()
     {
         //filepath = Application.persistentDataPath;
-        fullpath = filepath + "/" + filename + "_" + UserID + "_values_" + System.DateTime.Now.ToString("_yyMMdd_hhmmss") + ".csv";
+        fullpath = communication.filepath + "/" + Filename + "_" + communication.UserID + "_values_" + System.DateTime.Now.ToString("_yyMMdd_hhmmss") + ".csv";
 
         Debug.Log(fullpath);
 
@@ -220,7 +220,7 @@ public class Vorstudie : MonoBehaviour
 
         long currentTimestamp = System.DateTime.Now.Ticks / System.TimeSpan.TicksPerMillisecond;
 
-        streamWriter.WriteLine(currentTimestamp + ";" + UserID + ";" + exportString);
+        streamWriter.WriteLine(currentTimestamp + ";" + communication.UserID + ";" + exportString);
         streamWriter.Flush();
     }
 
